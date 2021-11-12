@@ -4,34 +4,48 @@
 using namespace std;
 using ll = long long;
 using pll = pair<ll,ll>;
-const int sze = 1e6+9;
-int n;
+const int sze = 1000009;
+
 vector<pll> v[sze]; /// cost : pos
 bool vst[sze],tVst[sze];
-ll rr[sze]; /// maximum of fp(i)
-int p[sze];
 ll sum=0,mx = 0,ans=0;
+vector<ll> memo ; ll n;
 
-
-int fp(ll i)
+int dfs(ll pos , ll sum)
 {
-    if(p[i] == 0 ) return i;
-    return p[i] = fp(p[i]);
-}
+    tVst[pos]=1;
 
-void dfs(int pos,ll sum)
-{
-    if(tVst[pos]) return ;
-    vst[pos] = 1;
-    tVst[pos] = 1;
     mx = max(mx,sum);
+
     for(auto it : v[pos])
     {
         if(tVst[it.s]) continue;
-        dfs(it.s,sum+it.f);
+        dfs(it.s,it.f+sum);
     }
 
-    tVst[pos] = 0;
+    tVst[pos]=0;
+
+}
+
+int fndB(ll pos, ll sum)
+{
+    vst[pos]=1;
+    tVst[pos]=1;
+
+    if(sum > mx)
+    {
+        mx = sum;
+        memo = {pos};
+    }
+    else if(sum==mx) memo.emplace_back(pos);
+
+    for(auto it : v[pos])
+    {
+        if(tVst[it.s]) continue;
+        fndB(it.s,it.f+sum);
+    }
+
+    tVst[pos]=0;
 }
 
 
@@ -39,36 +53,43 @@ int main()
 {
     ios_base::sync_with_stdio(0); cin.tie(0);
     cin >> n;
-    set<pair<ll,pll> > e; /// -cost ::  u:v
     for(int i=1;i<=n;++i)
     {
         ll a,b; cin >> a >> b;
         v[i].push_back({b,a});
         v[a].push_back({b,i});
-        e.insert({-b,{i,a}});
     }
 
-    /// disjoint
-    for(auto it : e)
+
+    // since there are N nodes and N edges and every node must have at least 1 edges connected to it
+    // therefore we can't have more than 1 cycle in each component
+
+
+    // idea from IOI editorial
+    // start at any random node (A) in the component
+    // dfs to the farthest node from A (will call that B)
+    // dfs from B to the farthest node C
+
+    for(ll i=1;i<=n;++i)
     {
-        ll cst = -it.f;
-        ll u = it.s.f;
-        ll v = it.s.s;
-        if(fp(u) == fp(v)) continue;
-      //  cerr << u << " linked w " << v << " consumed " << cst << endl;
-        p[fp(u)] = fp(v);
+        if(vst[i]) continue;
+        mx=-1 , memo.clear();
+        fndB(i,0);
+
+     //   cerr << mx << ' ' << memo ;
+        ll temp = mx;
+        mx = 0;
+        for(auto haha : memo)
+            dfs(haha,0);
+    //    cerr << ' ' << mx << endl;
+
+
+
+        ans+=max(temp,mx);
+
     }
 
-    /// dfs
-    for(int i=n;i>=1;--i)
-    {
-     //   if(vst[i]) continue;
-        for(int i=1;i<=n;++i) vst[i]=0,tVst[i]=0;
-        mx=0; dfs(i,0);
-        rr[fp(i)] = max(rr[fp(i)],mx);
-    //    cerr << mx << " w " << fp(i) << " | ";
-    }
-    for(int i=1;i<=n;++i) ans+=rr[i];
- //   cerr << endl;
     cout << ans;
+
+
 }

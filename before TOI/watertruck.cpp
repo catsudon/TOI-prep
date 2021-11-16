@@ -7,20 +7,22 @@ using namespace std;
 using pii = pair<int,int>;
 int n,e;
 const int N = 100009;
-const int E = 100009; // it's the same number , I just defined it different to remind which one is used for nodes / edges
+const int E = 100009;
 vector<pii> v1[N],v2[N];
 vector<int> v3[N];
 int edge_cost[E];
 int deg[N];
 int cut_edge = 0; // sum of the cost of the edge we cut off
-                                                    //   |--------|                  |-----|
-int morph[E]; // idk how to describe this    // eg. when 1--2--3--4 is compressed to 1--3--4   node 2 need to be forbidden and edge(1--2) and (2--3) need to be called 1--3 instead
-bool trashed[E]; // deleted edge ;-;
-bool forbidden[N]; // deleted node ;-;
-int lu[E] , lv[E]; // neighbor
+int morph[E];
+bool trashed[E];
+bool forbidden[N];
+bool just_compressed[E];
+int lu[E] , lv[E];
 int vst[E]; // 0 = unvst 1 = vst once 2 = worst case ( no need to visit any edges more than 2 times )
-int mnsum = INT_MAX; // ans
-int all_edges = 0; // edge count
+int mnsum = INT_MAX;
+int all_edges = 0;
+
+
 
 
 int dfs(int pos , int sum , int edgecnt)
@@ -32,6 +34,8 @@ int dfs(int pos , int sum , int edgecnt)
         return 0;
     }
 
+  //  cerr << pos << ' ' << sum << ' ' << edgecnt << endl;
+
     for(auto it : v3[pos])
     {
         int v = lv[it];
@@ -39,17 +43,20 @@ int dfs(int pos , int sum , int edgecnt)
         int cost = edge_cost[it];
         if(vst[it] == 2) continue;
 
+
+
         int coef=0;
-        if(vst[it]==0) coef=1; // new path which is not visited yet
+        if(vst[it]==0) coef=1;
         vst[it]++;
         dfs( v , sum+cost , edgecnt+coef);
         vst[it]--;
     }
+
 }
 
 void compress()             //  _______________
 {                           // |              |
-    queue<int> q;           // 1 -- 2 -- 3 -- 4    in this case 1 2 3 4 1 is the same with 1 2 1 4 3 2 1 ( better solution btw ) , that means we can always cut-off deg2 node
+    queue<int> q;           // 1 -- 2 -- 3 -- 4    in this case 1 2 3 4 1 is the same with 1 2 1 4 3 2 1 ( better solution btw )
     for(int i=1;i<=e;++i)
     {
         if(lu[i]==0 or lv[i]==0 ) continue;
@@ -61,9 +68,12 @@ void compress()             //  _______________
         int idx = q.front();
         q.pop();
         int u = lu[idx] , v = lv[idx];
-        if(forbidden[u] or forbidden[v]) continue;
+ //       cerr <<endl<< u << ":"<<v << endl;
+        if(forbidden[u] or forbidden[v] or just_compressed[idx]) continue;
+  //      cerr << deg[u] << " ";
         if(deg[u] == 2)
         {
+  //          cerr << "entered \n";
             int newline = 0;
 
             if(v2[u][1].f != idx) newline = v2[u][1].f;
@@ -86,19 +96,16 @@ void compress()             //  _______________
             }
 
             edge_cost[newline]+=edge_cost[idx];
-            trashed[idx] = true; // bye bye ~~
+            trashed[idx] = true;
             morph[idx]=newline;
 
             forbidden[u] = 1; // bye bye node u ~~
+   //         just_compressed[idx] = 1;
+   //         just_compressed[newline] = 1;
 
-   // cerr << " compressed " << tu << ':' << tv << "  and  " << u << ':' << v << endl;
-
-   /// what happened here
-            // case 1
+   //         cerr << " compressed " << tu << ':' << tv << "  and  " << u << ':' << v << endl;
             //      u    v                  v
             // o----o----o   ==>   o--------o
-
-            // case 2
             // v    u              v
             // o----o----o   ==>   o--------o
 
@@ -138,9 +145,9 @@ int main()
         deg1_node.pop();
 
         cut_edge += 2*edge_cost[edge_idx]; // guaranteed to get walk through only once
-        deg[nxt]--; // update
-        forbidden[pos] = true; // bye bye ~~
-        trashed[edge_idx] = true; // bye bye ~~
+        deg[pos]-- , deg[nxt]--;
+        forbidden[pos] = true;
+        trashed[edge_idx] = true;
 
         if(deg[nxt] == 1 and nxt != 0) deg1_node.push(nxt);
     }
@@ -156,7 +163,7 @@ int main()
 
     compress(); // compress deg2 nodes
 
-    for(int i=1;i<=e;++i) // create a new adjacency list containing only valid edges
+    for(int i=1;i<=e;++i)
     {
         if(trashed[i]) continue;
         v3[lu[i]].push_back(i);
@@ -168,5 +175,9 @@ int main()
     dfs(0 , 0 , 0);
 
     cout << cut_edge + mnsum;
+
+
+
+
 
 }

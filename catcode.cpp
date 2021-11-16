@@ -1,24 +1,18 @@
 #include<bits/stdc++.h>
-#define f first
-#define s second
 using namespace std;
 using ll = long long;
-const int sze = 1034001;
-const int pls = 3;
-pair<int,string> code[100009];
+const int sze(1'000'088);
+const int pls(0b1);
 int main()
 {
-    ios_base::sync_with_stdio(0); cin.tie();
+    ios_base::sync_with_stdio(0); cin.tie(0);
     int k,m; cin >> k >> m;
     int verify[k+9];
     bool check[100009]; for(int i=1;i<=k;++i) check[i] = 0;
     vector<int> table(sze,-1);
-    for(int i(1);i<=k;++i){cin >> code[i].s; code[i].f = i;}
-    shuffle(code+1,code+1+k,default_random_engine('H'+'E'+'L'+'L'+' '+'N'+'O'+'!'));
     for(int i(1);i<=k;++i)
     {
-        string t = code[i].s;
-        int idx = code[i].f;
+        string t; cin >> t;
         ll sum(0);
         ll lg(1);
         for(int j=m-1;j>=0;--j)
@@ -32,8 +26,8 @@ int main()
             sum2+=pls;
             sum2%=sze;
         }
-        table[sum2] = idx;
-        verify[idx] = sum;
+        table[sum2] = i;
+        verify[i] = sum;
     }
     int n; cin >> n;
     while(n--)
